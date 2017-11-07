@@ -194,11 +194,11 @@ void receive_demo(void* pvParameter)
 {
     while(1)
     {
-    		if (available()) {
-    			printf("Received %lu / %dbit Protocol: %d.", getReceivedValue(), getReceivedBitlength(), getReceivedProtocol());
-    			resetAvailable();
-    		}
+    	if (available()) {
+    		printf("Received %lu / %dbit Protocol: %d.", getReceivedValue(), getReceivedBitlength(), getReceivedProtocol());
+    		resetAvailable();
     	}
+    }
 }
 
 void app_main()
