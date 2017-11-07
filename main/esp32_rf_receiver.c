@@ -16,7 +16,7 @@
 
 #define DATA_PIN GPIO_NUM_22
 #define LED_PIN GPIO_NUM_2
-#define TAG "RXB6-RECEIVER"
+#define TAG "RF-RECEIVER"
 
 static const Protocol proto[] = {
   { 350, {  1, 31 }, {  1,  3 }, {  3,  1 }, false },    // protocol 1
