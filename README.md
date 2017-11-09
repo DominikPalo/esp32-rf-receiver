@@ -1,5 +1,5 @@
 # ESP32 RF receiver
-An ESP32 application to receive signals using 315/433MHz RF modules based on ESP-IDF SDK. Most of the code is ported from the [Arduino RC-Switch library](https://github.com/sui77/rc-switch) - rewritten from C++ to C. Some functions which are not contained in ESP-IDF SDK are ported from the (Arduino core for ESP32)[https://github.com/espressif/arduino-esp32] project.
+An ESP32 (ESP-IDF SDK) application to receive signals using 315/433MHz RF modules. Most of the code is ported from the [Arduino RC-Switch library](https://github.com/sui77/rc-switch) - rewritten from C++ to C. Some functions which are not contained in ESP-IDF SDK are ported from the [Arduino core for ESP32](https://github.com/espressif/arduino-esp32) project.
 
 ## Installation
 1. Prepare your ESP-IDF environment (http://esp-idf.readthedocs.io/en/latest/get-started/)
@@ -13,7 +13,7 @@ An ESP32 application to receive signals using 315/433MHz RF modules based on ESP
 ## Hardware
 You can use any 315/433Mhz 3.3V compatible RF receiver, but from my experience I highly recommend an [RXB6 Superheterodyne module](http://www.jmrth.com/en/images/proimages/RXB6_en_v3.pdf) (also known as 3400RF) - it has very good sensitivity/range and costs only about $1.5 on eBay.
 
-#### [How to connect an RF module to ESP32](wiring.png?raw=true) 
+See: [**How to connect an RF module to ESP32**](wiring.png?raw=true) 
 (DATA pin can be changed by setting DATA_PIN in the esp32_rf_receiver.c file)
 
 ## Usage
