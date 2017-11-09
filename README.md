@@ -5,7 +5,7 @@ The ESP32 wireless receiver for 315/433MHz modules based on ESP-IDF SDK.
 1. Prepare your ESP-IDF environment (http://esp-idf.readthedocs.io/en/latest/get-started/)
 2. Clone this repository `git clone https://github.com/DominikPalo/esp32-rf-receiver.git`
 3. Connect ESP32 board to PC and check under what serial port the board is visible
-4. Configure the serial port which be used to flash this application (port the previous step):
+4. Configure the serial port which will be used to flash this application (port the previous step):
     * Start the project configuration utility: `make menuconfig`
     * In the menu, navigate to `Serial flasher config` > `Default serial port` to configure the serial port, where project will be loaded to. Confirm selection by pressing enter, save configuration by selecting `< Save >` and then exit application by selecting `< Exit >`.
 5. Build and flash the application. Run: `make flash` - this will compile the application and all the ESP-IDF components, generate bootloader, partition table, and application binaries, and flash these binaries to your ESP32 board.
