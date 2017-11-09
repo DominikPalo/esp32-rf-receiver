@@ -31,8 +31,6 @@ enum {
    numProto = sizeof(proto) / sizeof(proto[0])
 };
 
-const long portTICK_PERIOD_MICROSECONDS = portTICK_PERIOD_MS * 1000;
-
 volatile unsigned long nReceivedValue = 0;
 volatile unsigned int nReceivedBitlength = 0;
 volatile unsigned int nReceivedDelay = 0;
