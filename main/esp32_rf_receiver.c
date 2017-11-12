@@ -13,9 +13,10 @@
 #include "esp_intr_alloc.h"
 #include "sdkconfig.h"
 #include "esp_log.h"
+#include "include/output.h"
 
 #define DATA_PIN GPIO_NUM_22
-#define LED_PIN GPIO_NUM_2
+#define ADVANCED_OUTPUT 1
 #define TAG "RF-RECEIVER"
 
 static const Protocol proto[] = {
@@ -30,6 +31,8 @@ static const Protocol proto[] = {
 enum {
    numProto = sizeof(proto) / sizeof(proto[0])
 };
+
+const long portTICK_PERIOD_MICROSECONDS = portTICK_PERIOD_MS * 1000;
 
 volatile unsigned long nReceivedValue = 0;
 volatile unsigned int nReceivedBitlength = 0;
@@ -144,6 +147,10 @@ unsigned int getReceivedProtocol() {
 	return nReceivedProtocol;
 }
 
+unsigned int* getReceivedRawdata() {
+  return timings;
+}
+
 // ---
 
 void data_interrupt_handler(void* arg)
@@ -192,11 +199,16 @@ void receive_demo(void* pvParameter)
 {
     while(1)
     {
-    	if (available()) {
-    		printf("Received %lu / %dbit Protocol: %d.", getReceivedValue(), getReceivedBitlength(), getReceivedProtocol());
-    		resetAvailable();
+    		if (available()) {
+    			if (ADVANCED_OUTPUT) {
+        		    output(getReceivedValue(), getReceivedBitlength(), getReceivedDelay(), getReceivedRawdata(), getReceivedProtocol());
+    			}
+    			else {
+    				printf("Received %lu / %dbit Protocol: %d.\n", getReceivedValue(), getReceivedBitlength(), getReceivedProtocol());
+    			}
+    			resetAvailable();
+    		}
     	}
-    }
 }
 
 void app_main()
@@ -214,10 +226,6 @@ void app_main()
 
 	gpio_config(&data_pin_config);
 	ESP_LOGI(TAG, "Data pin configured\n");
-
-	// Configure the LED
-	gpio_pad_select_gpio(LED_PIN);
-	gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT);
 
 	// Attach the interrupt handler
     gpio_install_isr_service(ESP_INTR_FLAG_EDGE);
