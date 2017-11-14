@@ -20,7 +20,9 @@ See: [**How to connect an RF module to ESP32**](wiring.png?raw=true)
 To get a full range of the RF receiver, you have to attach an external antenna to the ANT pin. A simple wire is sufficient - the length of the wire should be 22.6 cm for a 315 MHz module or 17.2 cm for a 433 MHz module.
 
 ## Usage
-Just connect with your terminal (PuTTY, CoolTerm, etc.) to the ESP32 serial port (baudrate 115200) and start emitting RF signals. All received signals will be outputed.
+Just connect with your terminal (PuTTY, CoolTerm, etc.) to the ESP32 serial port (baudrate 115200) and start emitting RF signals. All received signals will be outputed. You can choose between two types of output by setting the value of the `ADVANCED_OUTPUT`:
+* Simple output (`#define ADVANCED_OUTPUT 0`)
+* Advanced output (`#define ADVANCED_OUTPUT 1`)
 
 ## TODO
 * Transmitting functionality
