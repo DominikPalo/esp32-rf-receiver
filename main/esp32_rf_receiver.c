@@ -2,7 +2,7 @@
  * Inspired by RC-Switch library (https://github.com/sui77/rc-switch)
  */
 
-#include "rxb6_receiver.h"
+#include "esp32_rf_receiver.h"
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
