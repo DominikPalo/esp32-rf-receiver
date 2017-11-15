@@ -23,6 +23,3 @@ To get a full range of the RF receiver, you have to attach an external antenna t
 Just connect with your terminal (PuTTY, CoolTerm, etc.) to the ESP32 serial port (baudrate 115200) and start emitting RF signals. All received signals will be outputed. You can choose between two types of output by setting the value of the `ADVANCED_OUTPUT`:
 * Simple output (`#define ADVANCED_OUTPUT 0`)
 * Advanced output (`#define ADVANCED_OUTPUT 1`)
-
-## TODO
-* Transmitting functionality
