@@ -1,6 +1,9 @@
 # ESP32 RF receiver
 An ESP32 (ESP-IDF SDK) application to receive signals using 315/433 MHz RF modules. Most of the code is ported from the [Arduino RC-Switch library](https://github.com/sui77/rc-switch) - rewritten from C++ to C. Some functions which are not contained in ESP-IDF SDK are ported from the [Arduino core for ESP32](https://github.com/espressif/arduino-esp32) project.
 
+## Non-blocking loop
+Mac Wyznawca make some changes. Non-blocking loop with Queue and ESP-SDK native function esp_timer_get_time() for millisecond.
+
 ## Installation
 1. Prepare your ESP-IDF environment (http://esp-idf.readthedocs.io/en/latest/get-started/)
 2. Clone this repository `git clone https://github.com/DominikPalo/esp32-rf-receiver.git`
