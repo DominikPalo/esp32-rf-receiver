@@ -1,7 +1,7 @@
 /**
  * Inspired by RC-Switch library (https://github.com/sui77/rc-switch)
 
- * Mac Wyznawca make some changes. Non-blocking loop loop with Queue and ESP-SDK native function esp_timer_get_time() for mimis.
+ * Mac Wyznawca make some changes. Non-blocking loop with Queue and ESP-SDK native function esp_timer_get_time() for millisecond.
 
  */
 
