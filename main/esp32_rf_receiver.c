@@ -1,23 +1,28 @@
 /**
  * Inspired by RC-Switch library (https://github.com/sui77/rc-switch)
+
+ * Mac Wyznawca make some changes. Non-blocking loop with Queue and ESP-SDK native function esp_timer_get_time() for millisecond.
+
  */
 
 #include "esp32_rf_receiver.h"
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include <freertos/queue.h>
 #include "esp_system.h"
-#include "nvs_flash.h"
 #include "esp_spi_flash.h"
 #include "driver/gpio.h"
 #include "esp_intr_alloc.h"
 #include "sdkconfig.h"
 #include "esp_log.h"
 #include "include/output.h"
+#include "esp_timer.h"
 
-#define DATA_PIN GPIO_NUM_22
 #define ADVANCED_OUTPUT 1
-#define TAG "RF-RECEIVER"
+#define TAG "RF433"
+
+static xQueueHandle s_esp_RF433_queue = NULL;
 
 static const Protocol proto[] = {
   { 350, {  1, 31 }, {  1,  3 }, {  3,  1 }, false },    // protocol 1
@@ -31,8 +36,6 @@ static const Protocol proto[] = {
 enum {
    numProto = sizeof(proto) / sizeof(proto[0])
 };
-
-const long portTICK_PERIOD_MICROSECONDS = portTICK_PERIOD_MS * 1000;
 
 volatile unsigned long nReceivedValue = 0;
 volatile unsigned int nReceivedBitlength = 0;
@@ -49,22 +52,6 @@ unsigned int timings[RCSWITCH_MAX_CHANGES];
 /* helper function for the receiveProtocol method */
 static inline unsigned int diff(int A, int B) {
   return abs(A - B);
-}
-
-portMUX_TYPE microsMux = portMUX_INITIALIZER_UNLOCKED;
-unsigned long IRAM_ATTR micros()
-{
-    static unsigned long lccount = 0;
-    static unsigned long overflow = 0;
-    unsigned long ccount;
-    portENTER_CRITICAL_ISR(&microsMux);
-    __asm__ __volatile__ ( "rsr     %0, ccount" : "=a" (ccount) );
-    if(ccount < lccount){
-        overflow += UINT32_MAX / CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ;
-    }
-    lccount = ccount;
-    portEXIT_CRITICAL_ISR(&microsMux);
-    return overflow + (ccount / CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ);
 }
 
 bool receiveProtocol(const int p, unsigned int changeCount) {
@@ -159,8 +146,9 @@ void data_interrupt_handler(void* arg)
 	static unsigned long lastTime = 0;
 	static unsigned int repeatCount = 0;
 
-	const long time = micros();
+	const long time = esp_timer_get_time();
 	const unsigned int duration = time - lastTime;
+
 
 	if (duration > nSeparationLimit) {
 	    // A long stretch without signal level change occurred. This could
@@ -173,9 +161,11 @@ void data_interrupt_handler(void* arg)
 	      // with roughly the same gap between them).
 	      repeatCount++;
 	      if (repeatCount == 2) {
-	        for(unsigned int i = 1; i <= numProto; i++) {
+	        for(uint8_t i = 1; i <= numProto; i++) {
 	          if (receiveProtocol(i, changeCount)) {
 	            // receive succeeded for protocol i
+              uint8_t protocol_num = (uint8_t)i;
+              xQueueSendFromISR(s_esp_RF433_queue, &protocol_num, NULL);
 	            break;
 	          }
 	        }
@@ -184,7 +174,6 @@ void data_interrupt_handler(void* arg)
 	    }
 	    changeCount = 0;
 	  }
-
 	  // detect overflow
 	  if (changeCount >= RCSWITCH_MAX_CHANGES) {
 	    changeCount = 0;
@@ -195,41 +184,41 @@ void data_interrupt_handler(void* arg)
 	  lastTime = time;
 }
 
-void receive_demo(void* pvParameter)
+void receiver_rf433(void* pvParameter)
 {
-    while(1)
-    {
-    		if (available()) {
-    			if (ADVANCED_OUTPUT) {
-        		    output(getReceivedValue(), getReceivedBitlength(), getReceivedDelay(), getReceivedRawdata(), getReceivedProtocol());
-    			}
-    			else {
-    				printf("Received %lu / %dbit Protocol: %d.\n", getReceivedValue(), getReceivedBitlength(), getReceivedProtocol());
-    			}
-    			resetAvailable();
-    		}
-    	}
+  uint8_t prot_num = 0;
+  while(1)
+  {
+    if (xQueueReceive(s_esp_RF433_queue, &prot_num, portMAX_DELAY) == pdFALSE) {
+      ESP_LOGE(TAG, "RF433 interrurpt fail");
+    }
+    else {
+  		ESP_LOGW(TAG, "Received %lu / %dbit Protocol: %d.\n", getReceivedValue(), getReceivedBitlength(), prot_num);
+			resetAvailable();
+		}
+  }
 }
 
 void app_main()
 {
-	nvs_flash_init();
+  if (s_esp_RF433_queue == NULL) {
+      s_esp_RF433_queue = xQueueCreate(1, sizeof(uint8_t));
+      if (s_esp_RF433_queue != NULL) {
+        // Configure the data input
+        gpio_config_t data_pin_config = {
+          .intr_type = GPIO_INTR_ANYEDGE,
+          .mode = GPIO_MODE_INPUT,
+          .pin_bit_mask = GPIO_SEL_22, // GPIO_NUM_22 (SEL) DATA PIN!
+          .pull_up_en = GPIO_PULLUP_DISABLE,
+          .pull_down_en = GPIO_PULLDOWN_DISABLE
+        };
 
-	// Configure the data input
-	gpio_config_t data_pin_config = {
-		.intr_type = GPIO_INTR_ANYEDGE,
-		.mode = GPIO_MODE_INPUT,
-		.pin_bit_mask = (1 << DATA_PIN),
-		.pull_up_en = GPIO_PULLUP_DISABLE,
-		.pull_down_en = GPIO_PULLDOWN_DISABLE
-	};
+        gpio_config(&data_pin_config);
 
-	gpio_config(&data_pin_config);
-	ESP_LOGI(TAG, "Data pin configured\n");
-
-	// Attach the interrupt handler
-    gpio_install_isr_service(ESP_INTR_FLAG_EDGE);
-    gpio_isr_handler_add(DATA_PIN, data_interrupt_handler, NULL);
-
-	xTaskCreate(&receive_demo, "receive_demo", 2048, NULL, 5, NULL);
+        // Attach the interrupt handler
+        gpio_install_isr_service(ESP_INTR_FLAG_EDGE);
+        gpio_isr_handler_add(GPIO_NUM_22, data_interrupt_handler, NULL);  // GPIO_NUM_22 DATA PIN!
+        xTaskCreate(&receiver_rf433, "receiver_rf433", 2048, NULL, 3, NULL);
+    }
+  }
 }
